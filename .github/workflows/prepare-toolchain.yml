@@ -11,7 +11,13 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
       - name: Install official Android build tools
         shell: bash
         run: |
