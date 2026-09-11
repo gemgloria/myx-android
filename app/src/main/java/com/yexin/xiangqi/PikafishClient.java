@@ -24,6 +24,10 @@ public final class PikafishClient implements Closeable {
     public String engineName = "Pikafish 2026-09-06";
 
     public void start(File executable, File model, int threads) throws Exception {
+        start(executable,model,threads,256);
+    }
+
+    public void start(File executable, File model, int threads, int hashMegabytes) throws Exception {
         if (!executable.isFile() || !model.isFile()) throw new IOException("引擎或模型文件缺失");
         synchronized (writeLock) {
             if (closed) throw new IOException("引擎已关闭");
@@ -48,7 +52,7 @@ public final class PikafishClient implements Closeable {
             if (line.equals("uciok")) break;
         }
         send("setoption name EvalFile value " + model.getAbsolutePath());
-        configureHash(256);
+        configureHash(hashMegabytes);
         send("setoption name MultiPV value 1");
         send("setoption name UCI_ShowWDL value true");
         send("setoption name Ponder value false");

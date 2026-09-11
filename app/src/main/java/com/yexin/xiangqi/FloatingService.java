@@ -106,8 +106,7 @@ public final class FloatingService extends Service {
             showPanel();
             engineWorker.submit(()->{
                 try {
-                    engine.start(EngineFiles.executable(this),EngineFiles.model(this),searchThreads);
-                    engine.configureHash(hashMb);
+                    engine.start(EngineFiles.executable(this),EngineFiles.model(this),searchThreads,hashMb);
                     ui.post(()->{if(destroyed)return;engineReady=true;if(game!=null)refreshState(true);else if(paused)show("切换到象棋游戏后点开始");});
                 } catch(Exception e){ui.post(()->pause("引擎启动失败："+shortError(e)));}
             });
@@ -343,7 +342,7 @@ public final class FloatingService extends Service {
                 });
                 ui.post(()->{if(!destroyed&&id==revision&&ticket==job){probabilityFen=fen;engineBusy=false;ticket=null;}});
             } catch(CancellationException ignored) { }
-            catch(Exception e){ui.post(()->{if(!destroyed&&id==revision&&ticket==job){probabilityFen=fen;engineBusy=false;ticket=null;clearProbabilityText();}});}
+            catch(Exception e){ui.post(()->{if(!destroyed&&id==revision&&ticket==job)pause("局面分析失败："+shortError(e));});}
         });
     }
     private void sendMove() {
