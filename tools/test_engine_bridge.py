@@ -46,7 +46,11 @@ def main():
     perpetual='4k4/3R5/9/9/4P4/9/9/9/9/4K4 w - - 0 1'
     checking=['d8e8','e9d9','e8d8','d9e9']*2
     check(state(perpetual,checking)['result']=='black','perpetual checker loses')
-    check(state(START.replace('0 1','120 61'))['result']=='draw','Pikafish 60-move draw rule')
+    # Upstream now rejects a starting FEN whose rule counter is already 120.
+    # Reach the boundary with a real quiet move from the last permitted counter.
+    before_limit=START.replace('0 1','119 61')
+    check(state(before_limit)['result']=='ongoing','119 quiet plies remain playable')
+    check(state(before_limit,['b0c2'])['result']=='draw','120th quiet ply triggers the 60-move draw')
     check(state('3k5/9/9/9/9/9/9/9/9/4K4 w - - 0 1')['result']=='draw','insufficient mating material draw')
     commands=['position startpos','go perft 3']
     count=int(re.search(r'Nodes searched:\s*(\d+)',invoke(ENGINE,commands)).group(1))
