@@ -29,9 +29,16 @@ jobs:
           sdkmanager "build-tools;35.0.0" "platforms;android-35" "ndk;27.2.12479018"
       - name: Fetch and verify exact upstream source and model
         run: python3 tools/prepare_vendor.py
-      - name: Build and test native host engine
+      - name: Build native host engine
+        run: python3 tools/build_engine.py --host --jobs 4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: myx-host-validation-engine
+          path: build/pikafish-host
+          retention-days: 3
+          if-no-files-found: error
+      - name: Validate engine rules and application sessions
         run: |
-          python3 tools/build_engine.py --host --jobs 4
           python3 tools/test_engine_bridge.py --upstream build/pikafish-official-host
           python3 tools/test_core.py
           python3 tools/test_cloud.py

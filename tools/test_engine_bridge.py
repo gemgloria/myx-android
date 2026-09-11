@@ -9,7 +9,7 @@ ENGINE=ROOT/'build/pikafish-host'
 START='rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1'
 
 def invoke(engine,commands):
-    p=subprocess.run([str(engine)],input='\n'.join(commands+['quit','']),text=True,cwd=MODEL_DIR,capture_output=True,timeout=40)
+    p=subprocess.run([str(engine.resolve())],input='\n'.join(commands+['quit','']),text=True,cwd=MODEL_DIR,capture_output=True,timeout=40)
     if p.returncode:raise RuntimeError(p.stderr or p.stdout)
     return p.stdout
 
