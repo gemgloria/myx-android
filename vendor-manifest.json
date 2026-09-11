@@ -1,0 +1,8 @@
+{
+  "engine_version": "2026-09-06",
+  "upstream_commit": "4c17cee11f888ae1d48a9494f2e2239f019f0a1f",
+  "release_sha256": "41952bbfe2520faceb5902c69e6ab4845cc999841d2b49a95cc1be7867a25e5b",
+  "model_sha256": "7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e",
+  "model_size": 50706378,
+  "android_api": 26
+}

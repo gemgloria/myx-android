@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gesture_description">在你启动悬浮助手后，检查当前应用是否仍为所选象棋游戏，并在识别到合法走法后点击棋子及落点。你可以随时暂停或停止。不读取输入内容，不上传屏幕画面。</string>
+</resources>

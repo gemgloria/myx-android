@@ -1,0 +1,55 @@
+name: MYX Android
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - .github/workflows/prepare-toolchain.yml
+      - '**.md'
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full g++ make
+          sdkmanager "build-tools;35.0.0" "platforms;android-35" "ndk;27.2.12479018"
+      - name: Fetch and verify exact upstream source and model
+        run: python3 tools/prepare_vendor.py
+      - name: Build and test native host engine
+        run: |
+          python3 tools/build_engine.py --host --jobs 4
+          python3 tools/test_engine_bridge.py --upstream build/pikafish-official-host
+          python3 tools/test_core.py
+          python3 tools/test_cloud.py
+      - name: Build Android ARM64 engine
+        run: python3 tools/build_engine.py --ndk "$ANDROID_HOME/ndk/27.2.12479018" --jobs 4
+      - name: Build unsigned APK (no signing credentials in Actions)
+        run: python3 tools/build.py --unsigned --build-tools "$ANDROID_HOME/build-tools/35.0.0" --android-jar "$ANDROID_HOME/platforms/android-35/android.jar"
+      - name: Prepare native test artifacts
+        run: |
+          cp build/pikafish-host dist/
+          cp build/pikafish-official-host dist/
+          cp app/src/main/jniLibs/arm64-v8a/libpikafish.so dist/
+          cp vendor-manifest.json dist/
+          tar --exclude=.git -czf dist/pikafish-patched-source.tar.gz -C third_party pikafish
+          sha256sum dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: myx-1.2.0-unsigned-and-native
+          path: dist/
+          retention-days: 7
+          if-no-files-found: error

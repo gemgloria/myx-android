@@ -1,0 +1,12 @@
+/build/
+/dist/
+/third_party/pikafish/
+/app/src/main/assets/engine/*.nnue
+/app/src/main/jniLibs/
+/tests/fixtures/
+/validation/
+*.p12
+*.jks
+*.keystore
+*password*
+__pycache__/
