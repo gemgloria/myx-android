@@ -20,3 +20,5 @@
 应用和引擎保留 GPL 许可。模型使用独立的非商用许可，见 [NNUE-License.md](app/src/main/assets/licenses/NNUE-License.md)。
 
 自动测试覆盖引擎规则和应用控制逻辑；尚未进行 Android 真机或模拟器联调，也未测量手机上的棋力增幅。
+
+详见 [本版验证记录](VALIDATION-1.2.0.md)及[完整对应引擎源码](vendor/pikafish-2026-09-06-appstate.tar.gz)。
