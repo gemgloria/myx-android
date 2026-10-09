@@ -33,6 +33,10 @@ jobs:
       - name: Capture native simulator screens
         run: |
           mkdir -p build/NativeScreens
+          DEVICE_STATE=$(xcrun simctl list devices available -j | python3 -c 'import json,os,sys; d=json.load(sys.stdin); print(next(x["state"] for v in d["devices"].values() for x in v if x["udid"]==os.environ["DEVICE_ID"]))')
+          if [ "$DEVICE_STATE" != "Booted" ]; then xcrun simctl boot "$DEVICE_ID"; fi
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl install "$DEVICE_ID" build/simulator/Build/Products/Debug-iphonesimulator/ClearClass.app
           xcrun simctl status_bar "$DEVICE_ID" override --time '9:41' --batteryState charged --batteryLevel 100
           for VIEW in week today settings detail; do
             xcrun simctl launch --terminate-running-process "$DEVICE_ID" com.mayexin.ClearClass --preview-demo "--preview-$VIEW"
