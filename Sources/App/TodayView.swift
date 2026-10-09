@@ -3,7 +3,7 @@ import SwiftUI
 struct TodayView: View {
     @EnvironmentObject private var store: ScheduleStore
     @State private var now = AppPreview.date
-    let openCourse: (Course) -> Void
+    let openCourse: (Course, Int) -> Void
     var body: some View {
         let lessons = ScheduleEngine.lessons(on: now, semester: store.semester)
         ZStack {
@@ -16,7 +16,7 @@ struct TodayView: View {
                             .font(KaiFont.subheadline).foregroundStyle(.secondary)
                     }
                     if let next = ScheduleEngine.nextLesson(after: now, semester: store.semester) {
-                        Button { openCourse(next.course) } label: {
+                        Button { openCourse(next.course, AcademicCalendar.nearestWeek(on: next.start, semester: store.semester)) } label: {
                             VStack(alignment: .leading, spacing: 13) {
                                 HStack {
                                     Label(next.start <= now ? "正在上课" : "下一门课", systemImage: next.start <= now ? "sparkle" : "clock")
@@ -42,7 +42,7 @@ struct TodayView: View {
                         EmptyScheduleView(title: "今天没有课", subtitle: "留一点时间给自己。", symbol: "leaf")
                     } else {
                         ForEach(lessons) { lesson in
-                            Button { openCourse(lesson.course) } label: {
+                            Button { openCourse(lesson.course, AcademicCalendar.nearestWeek(on: lesson.start, semester: store.semester)) } label: {
                                 HStack(alignment: .top, spacing: 15) {
                                     VStack(spacing: 5) {
                                         Text(lesson.start, style: .time).font(KaiFont.subheadline.weight(.semibold))

@@ -16,15 +16,16 @@ struct RootView: View {
     @EnvironmentObject private var store: ScheduleStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var tab = AppPreview.tab
+    @State private var viewedWeek: Int? = AppPreview.enabled ? 6 : nil
     @State private var selectedCourse: CourseSelection?
     var body: some View {
         ZStack {
             NavigationStack {
                 Group {
                     switch tab {
-                    case 1: TodayView { showCourse($0, week: AcademicCalendar.nearestWeek(on: .now, semester: store.semester)) }
+                    case 1: TodayView { showCourse($0, week: $1) }
                     case 2: SettingsView()
-                    default: WeeklyScheduleView { showCourse($0, week: $1) }
+                    default: WeeklyScheduleView(chosenWeek: $viewedWeek) { showCourse($0, week: $1) }
                     }
                 }.safeAreaInset(edge: .bottom, spacing: 0) { tabBar }
             }.allowsHitTesting(selectedCourse == nil).accessibilityHidden(selectedCourse != nil)
@@ -50,7 +51,10 @@ struct RootView: View {
                 if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                    let idString = components.queryItems?.first(where: { $0.name == "course" })?.value,
                    let id = UUID(uuidString: idString), let course = store.semester.courses.first(where: { $0.id == id }) {
-                    showCourse(course, week: AcademicCalendar.nearestWeek(on: .now, semester: store.semester))
+                    let linkedWeek = components.queryItems?.first(where: { $0.name == "week" })?.value.flatMap(Int.init)
+                    let week = linkedWeek.flatMap { (1...store.semester.weekCount).contains($0) ? $0 : nil }
+                        ?? AcademicCalendar.nearestWeek(on: .now, semester: store.semester)
+                    showCourse(course, week: week)
                 }
             }
     }

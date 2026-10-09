@@ -44,7 +44,7 @@ struct CourseWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: CourseEntry
     private var targetURL: URL {
-        if let next = entry.next { return URL(string: "clearclass://today?course=" + next.course.id.uuidString)! }
+        if let next = entry.next { return courseURL(next) }
         return URL(string: "clearclass://today")!
     }
     var body: some View {
@@ -108,7 +108,7 @@ struct CourseWidgetView: View {
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ForEach(Array(visible.prefix(family == .systemLarge ? 7 : 3))) { lesson in
-                    Link(destination: URL(string: "clearclass://today?course=" + lesson.course.id.uuidString)!) {
+                    Link(destination: courseURL(lesson)) {
                         HStack(spacing: 10) {
                             RoundedRectangle(cornerRadius: 2).fill(lesson.course.color.tint).frame(width: 3)
                             Text(lesson.start, style: .time).font(KaiFont.caption.weight(.medium)).monospacedDigit().frame(width: 45, alignment: .leading)
@@ -158,6 +158,10 @@ struct CourseWidgetView: View {
         if AcademicCalendar.calendar.isDate(lesson.start, inSameDayAs: entry.date) { return "下一门课" }
         if AcademicCalendar.calendar.isDate(lesson.start, inSameDayAs: AcademicCalendar.addDays(1, to: entry.date)) { return "明天" }
         return lesson.start.formatted(.dateTime.month().day())
+    }
+    private func courseURL(_ lesson: Lesson) -> URL {
+        let week = entry.semester.map { AcademicCalendar.nearestWeek(on: lesson.start, semester: $0) } ?? 1
+        return URL(string: "clearclass://today?course=" + lesson.course.id.uuidString + "&week=" + String(week))!
     }
 }
 

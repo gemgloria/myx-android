@@ -3,7 +3,7 @@ import SwiftUI
 struct WeeklyScheduleView: View {
     @EnvironmentObject private var store: ScheduleStore
     @Environment(\.dynamicTypeSize) private var typeSize
-    @State private var chosenWeek: Int? = AppPreview.enabled ? 6 : nil
+    @Binding var chosenWeek: Int?
     @State private var showWeekPicker = false
     @State private var showImport = false
     @State private var showAdd = false
