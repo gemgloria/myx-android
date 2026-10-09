@@ -2,6 +2,8 @@
 
 SwiftUI 原生应用，界面使用液态玻璃风格。iOS 26 使用系统 Liquid Glass，iOS 17–18 使用磨砂材料回退。兼容 iPhone 和 iPad，完全离线，不需要学校账号、服务器或 API Key。
 
+字体统一使用随包嵌入的霞鹜文楷 1.522，App 与 Widget 均包含完整字库与 OFL 许可证。导航、按钮、表单、课程卡片和课程展开层统一使用玻璃表面。
+
 已实现周课表、今天视图、学期切换与编辑、第1周起始日期、每节课开始/结束时间、手动添加/编辑/删除、截图导入、表格导入、备份恢复，以及桌面和锁屏 WidgetKit 小组件。只提供这三个主要入口，不加入聊天和社交功能。
 
 ## 打开工程
@@ -13,7 +15,13 @@ SwiftUI 原生应用，界面使用液态玻璃风格。iOS 26 使用系统 Liqu
 5. 为 **ClearClass 与 ClearClassWidgets 两个 Target**配置同一开发团队，并在 Signing & Capabilities 中启用同一个 App Group。真实设备上的共享权限需要相应的签名配置和描述文件支持。
 6. 选择 iPhone 后运行。第一次启动是空课表，可导入自己的截图或表格，也可以使用明确标注的示例。
 
-本次交付环境是 Linux，没有 Xcode/iOS SDK，**未编译或签名 IPA，未在 iPhone 上运行，未实际执行 Vision OCR 或 XCTest**。工程文件、Swift 语法树、表格实际读取和预览可以在当前环境检查；这不代表 iOS 编译已通过。
+版本 0.2.0 已通过 GitHub Actions 的 macOS / Xcode 26.3 构建，生成包含 App 和 Widget 的 arm64 iPhone 安装包，并核验包内字体及平台。交付包未签名，安装前必须签名。原生测试与界面验证结果见 `VALIDATION.md`；真实设备的 OCR 准确率和小组件共享仍需实机验证。
+
+## 按周显示与课程展开
+
+课表只显示当前选择周的课程；同一时段只占一张卡片，角标表示该时段安排的数量。点开卡片后放大显示所有周次的安排，本周课程在前，其他安排标注“非本周”；每门课程可单独编辑。若同一周有真实时间冲突，展开页完整显示并提示核对。切换标签页保留所选周；切换学期重新定位当前周。
+
+小组件预览放在“设置”的“桌面与锁屏小组件”中，“今天”只显示当天安排和下一门课。
 
 ## 导入截图
 
@@ -61,7 +69,7 @@ bash Scripts/build-unsigned.sh
 
 生成 `build/ClearClass-unsigned.ipa`，包含 Widget 扩展。这是**待签名包**，无法直接点开安装。要真正安装并使用小组件，需要给 App 和 Widget 扩展完整签名并保留同一 App Group 权限。使用 Xcode 的 Product→Archive→Distribute App，可按你的开发账号导出已签名版本。
 
-工程含 `.github/workflows/ios.yml`：放入自己的 GitHub 仓库后可以手动运行，使用 Xcode 26 的 macOS Runner，执行原生测试并输出未签名 IPA。本次没有创建仓库或启动云端构建。
+工程含 `.github/workflows/ios.yml`，已在 `gemgloria/myx-android` 的独立 `clearclass-ipa` 分支启动云端构建。工作流选择 Xcode 26.3，执行设备构建、IPA 内容验证、表格回归、原生 XCTest 和模拟器截图。源码克隆后先运行 `python3 Scripts/prepare-dependencies.py`；依赖 URL、版本和 SHA-256 均固定，运行时完全离线。
 
 ## 验证与文件
 
