@@ -1,0 +1,8 @@
+{
+  "component": "SheetJS Community Edition",
+  "version": "0.20.3",
+  "license": "Apache-2.0",
+  "distribution_url": "https://cdn.jsdelivr.net/npm/@e965/xlsx@0.20.3/dist/xlsx.full.min.js",
+  "sha256": "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41",
+  "official_documentation": "https://docs.sheetjs.com/docs/demos/engines/jsc/"
+}

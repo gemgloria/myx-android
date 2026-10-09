@@ -1,0 +1,14 @@
+[
+  {
+    "path": "Resources/LXGWWenKai-Regular.ttf",
+    "url": "https://raw.githubusercontent.com/lxgw/LxgwWenKai/v1.522/fonts/TTF/LXGWWenKai-Regular.ttf",
+    "sha256": "39ad71264b588165b469e35e6afb162a378dacd1f95348160240ba9038ac3009",
+    "license": "WENKAI-OFL.txt"
+  },
+  {
+    "path": "Resources/xlsx.full.min.js",
+    "url": "https://cdn.jsdelivr.net/npm/@e965/xlsx@0.20.3/dist/xlsx.full.min.js",
+    "sha256": "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41",
+    "license": "SHEETJS-LICENSE.txt"
+  }
+]
