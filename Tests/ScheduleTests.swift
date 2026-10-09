@@ -9,6 +9,17 @@ final class ScheduleTests: XCTestCase {
         XCTAssertNotNil(UIFont(name: KaiFont.name, size: 17))
         XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String, "烨昕的课表")
     }
+    func testSpreadsheetImportRunsInNativeJavaScriptCore() async throws {
+        let csv = "\u{FEFF}课程名称,星期,节次,周次,教师,教室\n太阳能利用概论,周二,3-4,\"1-4,6-8\",李海金,教三北413\n新能源专业英语,周二,3-4,11-18,毛可可,教三北413"
+        let result = try await SpreadsheetService.recognize(data: Data(csv.utf8))
+        XCTAssertEqual(result.candidates.count, 2)
+        XCTAssertEqual(result.candidates[0].course.name, "太阳能利用概论")
+        XCTAssertEqual(result.candidates[0].course.weeks, [1, 2, 3, 4, 6, 7, 8])
+        XCTAssertEqual(result.candidates[1].course.weekday, 2)
+        XCTAssertEqual(result.candidates[1].course.startPeriod, 3)
+        XCTAssertEqual(result.candidates[1].course.endPeriod, 4)
+        XCTAssertEqual(result.candidates[1].course.location, "教三北413")
+    }
     func testWeekExpressionsPreserveGapsAndParity() throws {
         XCTAssertEqual(try WeekExpression.parse("1-4,6-8"), [1, 2, 3, 4, 6, 7, 8])
         XCTAssertEqual(try WeekExpression.parse("１－８（单周）"), [1, 3, 5, 7])

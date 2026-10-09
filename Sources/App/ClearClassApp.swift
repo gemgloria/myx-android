@@ -36,6 +36,7 @@ struct RootView: View {
             }
         }.tint(.indigo)
             .animation(reduceMotion ? nil : .spring(response: 0.38, dampingFraction: 0.9), value: selectedCourse?.id)
+            .onChange(of: store.semester.id) { _, _ in viewedWeek = nil }
             .onAppear {
                 if AppPreview.showDetail,
                    let course = store.semester.courses.first(where: { $0.name == "太阳能利用概论" && $0.weekday == 2 }) {
