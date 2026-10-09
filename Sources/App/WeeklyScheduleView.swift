@@ -88,11 +88,12 @@ struct WeeklyScheduleView: View {
     private var weekNavigation: some View {
         HStack(spacing: 10) {
             Button { chosenWeek = max(1, week - 1) } label: {
-                Image(systemName: "chevron.left").frame(width: 40, height: 44)
-            }.disabled(week == 1).accessibilityLabel("上一周")
+                Image(systemName: "chevron.left").frame(width: 36, height: 44)
+                    .liquidGlass(radius: 20, interactive: true)
+            }.buttonStyle(.plain).disabled(week == 1).accessibilityLabel("上一周")
             Button { showWeekPicker = true } label: {
                 HStack(spacing: 6) {
-                    Text("第 \(week) 周").font(KaiFont.headline)
+                    Text("第 \(week) 周").font(KaiFont.headline).lineLimit(1).fixedSize(horizontal: true, vertical: false)
                     Image(systemName: "chevron.down").font(KaiFont.caption2)
                 }.frame(minHeight: 44)
             }.buttonStyle(.plain)
@@ -103,7 +104,8 @@ struct WeeklyScheduleView: View {
             }
             Button { chosenWeek = min(store.semester.weekCount, week + 1) } label: {
                 Image(systemName: "chevron.right").frame(width: 32, height: 44)
-            }.disabled(week == store.semester.weekCount).accessibilityLabel("下一周")
+                    .liquidGlass(radius: 20, interactive: true)
+            }.buttonStyle(.plain).disabled(week == store.semester.weekCount).accessibilityLabel("下一周")
         }.padding(.horizontal, 6).liquidGlass(radius: 24)
     }
     private var weekDateText: String {
