@@ -101,6 +101,7 @@ struct CourseDetailView: View {
     let close: () -> Void
     @State private var editing: Course?
     @State private var deleting: Course?
+    @State private var showDeleteConfirmation = false
     private var current: Course { store.semester.courses.first { $0.id == course.id } ?? course }
     private var alternatives: [Course] {
         CourseLayout.alternatives(for: current, courses: store.semester.courses, week: week)
@@ -137,12 +138,13 @@ struct CourseDetailView: View {
                 CourseEditorView(semester: store.semester, course: value) { try store.saveCourse($0) }
                     .font(KaiFont.body).buttonStyle(GlassButtonStyle()).presentationBackground(.ultraThinMaterial)
             }
-            .confirmationDialog("删除「\(deleting?.name ?? "")」？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+            .confirmationDialog("删除「\(deleting?.name ?? "")」？", isPresented: $showDeleteConfirmation, titleVisibility: .visible, presenting: deleting) { value in
                 Button("删除此课程安排", role: .destructive) {
-                    if let value = deleting { store.deleteCourse(value.id) }
+                    store.deleteCourse(value.id)
                     deleting = nil
                     if alternatives.isEmpty { close() }
                 }
+                Button("取消", role: .cancel) { deleting = nil }
             }
     }
     private func detailCard(_ value: Course) -> some View {
@@ -161,7 +163,7 @@ struct CourseDetailView: View {
                     Text("编辑").font(KaiFont.subheadline).padding(.horizontal, 12).padding(.vertical, 9)
                         .liquidGlass(tint: active ? value.color.tint : .gray, radius: 14, interactive: true)
                 }.buttonStyle(.plain).accessibilityLabel("编辑" + value.name)
-                GlassIconButton(symbol: "trash", label: "删除" + value.name, tint: .red) { deleting = value }
+                GlassIconButton(symbol: "trash", label: "删除" + value.name, tint: .red) { requestDeletion(value) }
                     .accessibilityIdentifier("delete-course-" + value.name)
             }
             Text("第 \(value.weekText) 周").font(KaiFont.body)
@@ -179,8 +181,12 @@ struct CourseDetailView: View {
             .liquidGlass(tint: active ? value.color.tint : .gray, radius: 26)
             .contextMenu {
                 Button("编辑课程", systemImage: "pencil") { editing = value }
-                Button("删除课程", systemImage: "trash", role: .destructive) { deleting = value }
+                Button("删除课程", systemImage: "trash", role: .destructive) { requestDeletion(value) }
             }
+    }
+    private func requestDeletion(_ value: Course) {
+        deleting = value
+        showDeleteConfirmation = true
     }
     private func timeText(_ value: Course) -> String {
         guard let first = store.semester.periods.first(where: { $0.id == value.startPeriod }),

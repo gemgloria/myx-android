@@ -48,7 +48,12 @@ final class ScheduleTests: XCTestCase {
                     .environment(\.colorScheme, .light).frame(width: 170, height: 180).background(.white))
                 renderer.scale = 2
                 let image = try XCTUnwrap(renderer.uiImage)
-                try XCTUnwrap(image.pngData()).write(to: directory.appendingPathComponent("\(name)-\(modeName).png"))
+                let png = try XCTUnwrap(image.pngData())
+                try png.write(to: directory.appendingPathComponent("\(name)-\(modeName).png"))
+                let attachment = XCTAttachment(data: png, uniformTypeIdentifier: "public.png")
+                attachment.name = "widget-\(name)-\(modeName)"
+                attachment.lifetime = .keepAlways
+                add(attachment)
                 // Check the header band: it contains the app title, not the leaf
                 // icon. This catches a blank snapshot even when data is missing.
                 let cgImage = try XCTUnwrap(image.cgImage)

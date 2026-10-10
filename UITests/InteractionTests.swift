@@ -27,7 +27,7 @@ final class InteractionTests: XCTestCase {
 
     func testCourseOpensFromEmptyMiddleAndLowerCorners() {
         let points = [CGVector(dx: 0.5, dy: 0.5), CGVector(dx: 0.85, dy: 0.82), CGVector(dx: 0.15, dy: 0.18)]
-        for point in points {
+        for (index, point) in points.enumerated() {
             let course = app.buttons["course-2-3"]
             XCTAssertTrue(course.waitForExistence(timeout: 3))
             course.coordinate(withNormalizedOffset: point).tap()
@@ -35,6 +35,7 @@ final class InteractionTests: XCTestCase {
             XCTAssertTrue(close.waitForExistence(timeout: 2))
             XCTAssertTrue(app.staticTexts["新能源专业英语"].exists)
             assertVisibleText(app.staticTexts["太阳能利用概论"].firstMatch)
+            if index == 0 { captureScreen("detail") }
             close.tap()
             XCTAssertTrue(course.waitForExistence(timeout: 2))
         }
@@ -59,24 +60,43 @@ final class InteractionTests: XCTestCase {
                 XCTAssertTrue(button.isSelected)
             }
         }
-        let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = "Bottom navigation after repeated taps"
-        attachment.lifetime = .keepAlways
-        add(attachment)
+        captureScreen("week")
+        app.buttons["tab-1"].tap()
+        captureScreen("today")
+        app.buttons["tab-2"].tap()
+        captureScreen("settings")
     }
 
     func testDeleteRemovesOnlyTheSelectedArrangement() {
         app.buttons["course-2-3"].tap()
+        let deleteCurrent = app.buttons["delete-course-太阳能利用概论"]
+        XCTAssertTrue(deleteCurrent.waitForExistence(timeout: 3))
+        deleteCurrent.tap()
+        let cancel = app.buttons["取消"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 2))
+        cancel.tap()
+        XCTAssertTrue(app.staticTexts["太阳能利用概论"].exists)
         let delete = app.buttons["delete-course-新能源专业英语"]
         XCTAssertTrue(delete.waitForExistence(timeout: 3))
         delete.tap()
         let confirm = app.buttons["删除此课程安排"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 2))
         confirm.tap()
-        XCTAssertFalse(app.staticTexts["新能源专业英语"].exists)
+        XCTAssertTrue(app.staticTexts["新能源专业英语"].waitForNonExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["太阳能利用概论"].exists)
+        captureScreen("after-delete")
         app.buttons["close-course"].tap()
         XCTAssertTrue(app.buttons["course-2-3"].waitForExistence(timeout: 2))
+        app.buttons["course-2-3"].tap()
+        XCTAssertFalse(app.staticTexts["新能源专业英语"].exists)
+        XCTAssertTrue(app.staticTexts["太阳能利用概论"].exists)
+    }
+
+    private func captureScreen(_ name: String) {
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     private func assertVisibleText(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
