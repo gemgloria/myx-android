@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 final class InteractionTests: XCTestCase {
     private var app: XCUIApplication!
@@ -33,6 +34,7 @@ final class InteractionTests: XCTestCase {
             let close = app.buttons["close-course"]
             XCTAssertTrue(close.waitForExistence(timeout: 2))
             XCTAssertTrue(app.staticTexts["新能源专业英语"].exists)
+            assertVisibleText(app.staticTexts["太阳能利用概论"].firstMatch)
             close.tap()
             XCTAssertTrue(course.waitForExistence(timeout: 2))
         }
@@ -75,5 +77,28 @@ final class InteractionTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["太阳能利用概论"].exists)
         app.buttons["close-course"].tap()
         XCTAssertTrue(app.buttons["course-2-3"].waitForExistence(timeout: 2))
+    }
+
+    private func assertVisibleText(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        let image = app.screenshot().image.cgImage!
+        let scale = CGFloat(image.width) / app.frame.width
+        let rect = element.frame
+        let minX = max(0, Int(rect.minX * scale)), maxX = min(image.width, Int(rect.maxX * scale))
+        let minY = max(0, Int(rect.minY * scale)), maxY = min(image.height, Int(rect.maxY * scale))
+        var pixels = [UInt8](repeating: 255, count: image.width * image.height * 4)
+        let count = pixels.withUnsafeMutableBytes { buffer -> Int in
+            let context = CGContext(data: buffer.baseAddress, width: image.width, height: image.height,
+                bitsPerComponent: 8, bytesPerRow: image.width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+            context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+            let data = buffer.bindMemory(to: UInt8.self)
+            return (minY..<maxY).reduce(0) { result, y in
+                result + (minX..<maxX).filter { x in
+                    let offset = (y * image.width + x) * 4
+                    return Int(data[offset]) + Int(data[offset + 1]) + Int(data[offset + 2]) < 530
+                }.count
+            }
+        }
+        XCTAssertGreaterThan(count, 100, "Course text must be visible in the rendered screen, not only in accessibility.", file: file, line: line)
     }
 }

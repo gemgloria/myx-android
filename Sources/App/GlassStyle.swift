@@ -20,21 +20,20 @@ struct GlassSurface: ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        // The material is decoration. Keep it out of hit testing, and keep labels
-        // in the normal view tree so the whole padded button remains tappable.
-        content.background {
-            Group {
-                if reduceTransparency {
-                    shape.fill(Color(uiColor: .secondarySystemBackground))
-                        .overlay(shape.strokeBorder(tint.opacity(0.2), lineWidth: 1))
-                } else if #available(iOS 26.0, *) {
-                    shape.fill(.clear).glassEffect(.regular.tint(tint.opacity(0.1)), in: shape)
-                } else {
-                    shape.fill(.ultraThinMaterial)
-                        .overlay(shape.fill(tint.opacity(0.07)))
-                        .overlay(shape.strokeBorder(.primary.opacity(0.07), lineWidth: 0.75))
-                }
-            }.allowsHitTesting(false).accessibilityHidden(true)
+        // Apply glass to the content so GlassEffectContainer composites its text
+        // above the surface. Interactive glass gestures stay disabled; buttons
+        // define their own complete hit regions instead.
+        Group {
+            if reduceTransparency {
+                content.background(Color(uiColor: .secondarySystemBackground), in: shape)
+                    .overlay(shape.strokeBorder(tint.opacity(0.2), lineWidth: 1).allowsHitTesting(false))
+            } else if #available(iOS 26.0, *) {
+                content.glassEffect(.regular.tint(tint.opacity(0.1)), in: shape)
+            } else {
+                content.background(.ultraThinMaterial, in: shape)
+                    .background(tint.opacity(0.07), in: shape)
+                    .overlay(shape.strokeBorder(.primary.opacity(0.07), lineWidth: 0.75).allowsHitTesting(false))
+            }
         }.contentShape(.interaction, shape)
     }
 }
