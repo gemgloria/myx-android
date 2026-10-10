@@ -2,7 +2,7 @@
 
 SwiftUI 原生应用，界面使用液态玻璃风格。iOS 26 使用系统 Liquid Glass，iOS 17–18 使用磨砂材料回退。兼容 iPhone 和 iPad，完全离线，不需要学校账号、服务器或 API Key。
 
-字体统一使用随包嵌入的霞鹜文楷 1.522，App 与 Widget 均包含完整字库与 OFL 许可证。导航、按钮、表单、课程卡片和课程展开层统一使用玻璃表面。
+字体统一使用随包嵌入的霞鹜文楷 1.522，App 包含完整字库，Widget 包含较小的常用汉字字库；两者均附 OFL 许可证。导航、按钮、表单、课程卡片和课程展开层使用玻璃背景；装饰层不参加触摸判断。小组件使用 WidgetKit 的系统背景和可快照文字，系统透明模式提供玻璃外观。
 
 已实现周课表、今天视图、学期切换与编辑、第1周起始日期、每节课开始/结束时间、手动添加/编辑/删除、截图导入、表格导入、备份恢复，以及桌面和锁屏 WidgetKit 小组件。只提供这三个主要入口，不加入聊天和社交功能。
 
@@ -15,13 +15,15 @@ SwiftUI 原生应用，界面使用液态玻璃风格。iOS 26 使用系统 Liqu
 5. 为 **ClearClass 与 ClearClassWidgets 两个 Target**配置同一开发团队，并在 Signing & Capabilities 中启用同一个 App Group。真实设备上的共享权限需要相应的签名配置和描述文件支持。
 6. 选择 iPhone 后运行。第一次启动是空课表，可导入自己的截图或表格，也可以使用明确标注的示例。
 
-版本 0.2.0 已通过 GitHub Actions 的 macOS / Xcode 26.3 构建，生成包含 App 和 Widget 的 arm64 iPhone 安装包，并核验包内字体及平台。交付包未签名，安装前必须签名。原生测试与界面验证结果见 `VALIDATION.md`；真实设备的 OCR 准确率和小组件共享仍需实机验证。
+版本 0.2.1 已通过 GitHub Actions 的 macOS / Xcode 26.3 构建，生成包含 App 和 Widget 的 arm64 iPhone 安装包，并核验包内字体及平台。交付包未签名，安装前必须签名。原生测试与界面验证结果见 `VALIDATION.md`；真实设备的 OCR 准确率和小组件共享仍需实机验证。
 
 ## 按周显示与课程展开
 
 课表只显示当前选择周的课程；同一时段只占一张卡片，角标表示该时段安排的数量。点开卡片后放大显示所有周次的安排，本周课程在前，其他安排标注“非本周”；每门课程可单独编辑。若同一周有真实时间冲突，展开页完整显示并提示核对。切换标签页保留所选周；切换学期重新定位当前周。
 
-小组件预览放在“设置”的“桌面与锁屏小组件”中，“今天”只显示当天安排和下一门课。
+小组件预览放在“设置”的“桌面与锁屏小组件”中，与扩展共用同一份文字视图；“今天”只显示当天安排和下一门课。
+
+0.2.1 修复底栏空白区域点击穿透、课程卡片空白处漏点和小组件文字快照问题。底栏位于独立布局区域，每个按钮拥有完整点击范围。课程展开卡片有可见的删除按钮，确认后仅删除选中的课程安排。
 
 ## 导入截图
 
@@ -55,7 +57,7 @@ SwiftUI 原生应用，界面使用液态玻璃风格。iOS 26 使用系统 Liqu
 - 大尺寸：今日完整课程列表，最多展示7门，并提示其余课程数。
 - 锁屏：行内、矩形和圆形，显示下一门课或今日剩余课程数。
 
-小组件与 App 使用同一个 App Group 文件，读取同一个选中学期。保存课程、作息或学期后请求刷新，并提前安排上课、下课和跨日的时间线。**系统决定实际刷新时机，并非秒级实时刷新。**点击可打开应用或课程详情。
+小组件与 App 使用同一个 App Group 文件，读取同一个选中学期。进入 App 或保存课程、作息、学期后请求刷新，并提前安排上课、下课和跨日的时间线。**系统决定实际刷新时机，并非秒级实时刷新。**点击可打开应用或课程详情。
 
 只有普通 App 的签名或删掉扩展的安装方式，不能提供完整小组件。App 能在缺少共享权限时保存本地课表，但会在设置页提示小组件不可用。将来更换包标识或 App Group 前请先导出备份。
 
@@ -64,16 +66,20 @@ SwiftUI 原生应用，界面使用液态玻璃风格。iOS 26 使用系统 Liqu
 Mac 终端执行：
 
 ```bash
+python3 Scripts/prepare-dependencies.py
+python3 -m venv build/font-tools
+build/font-tools/bin/pip install fonttools==4.61.1
+build/font-tools/bin/python Scripts/prepare-widget-font.py
 bash Scripts/build-unsigned.sh
 ```
 
 生成 `build/ClearClass-unsigned.ipa`，包含 Widget 扩展。这是**待签名包**，无法直接点开安装。要真正安装并使用小组件，需要给 App 和 Widget 扩展完整签名并保留同一 App Group 权限。使用 Xcode 的 Product→Archive→Distribute App，可按你的开发账号导出已签名版本。
 
-工程含 `.github/workflows/ios.yml`，已在 `gemgloria/myx-android` 的独立 `clearclass-ipa` 分支启动云端构建。工作流选择 Xcode 26.3，执行设备构建、IPA 内容验证、表格回归、原生 XCTest 和模拟器截图。源码克隆后先运行 `python3 Scripts/prepare-dependencies.py`；依赖 URL、版本和 SHA-256 均固定，运行时完全离线。
+工程含 `.github/workflows/ios.yml`，已在 `gemgloria/myx-android` 的独立 `clearclass-ipa` 分支启动云端构建。工作流选择 Xcode 26.3，执行设备构建、IPA 内容验证、表格回归、原生 XCTest 和模拟器截图。源码克隆后先按上面的命令准备完整字体和小组件字体；依赖 URL、版本和 SHA-256 均固定，运行时完全离线。
 
 ## 验证与文件
 
-`VALIDATION.md` 列出本次实际执行的检查和未执行项目。`Tests/ScheduleTests.swift` 覆盖日期边界、单双周、跨节课、重叠、截图结构解析与备份验证；需在 Xcode 中按 Cmd+U 执行。
+`VALIDATION.md` 列出本次实际执行的检查和未执行项目。`Tests/ScheduleTests.swift` 覆盖日期边界、单双周、跨节课、重叠、截图结构解析、备份验证和小组件文字快照；`UITests/InteractionTests.swift` 覆盖按钮边缘点按、连续切页、卡片空白点按和删除安排；需在 Xcode 中按 Cmd+U 执行。
 
 本地表格回归检查：
 
