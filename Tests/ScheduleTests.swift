@@ -57,7 +57,6 @@ final class ScheduleTests: XCTestCase {
                     let context = CGContext(data: buffer.baseAddress, width: cgImage.width, height: cgImage.height,
                         bitsPerComponent: 8, bytesPerRow: cgImage.width * 4, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
-                    context.translateBy(x: 0, y: CGFloat(cgImage.height)); context.scaleBy(x: 1, y: -1)
                     context.draw(cgImage, in: CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
                     let data = buffer.bindMemory(to: UInt8.self)
                     return (24..<84).reduce(0) { count, y in

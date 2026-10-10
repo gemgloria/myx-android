@@ -132,7 +132,7 @@ struct CourseDetailView: View {
                     .frame(maxHeight: min(CGFloat(alternatives.count) * 270 + 60, 650))
                 Spacer(minLength: 0)
             }.frame(maxWidth: 520)
-        }.font(KaiFont.body).accessibilityIdentifier("course-detail")
+        }.font(KaiFont.body)
             .sheet(item: $editing) { value in
                 CourseEditorView(semester: store.semester, course: value) { try store.saveCourse($0) }
                     .font(KaiFont.body).buttonStyle(GlassButtonStyle()).presentationBackground(.ultraThinMaterial)

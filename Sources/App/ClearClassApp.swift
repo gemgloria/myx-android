@@ -83,7 +83,6 @@ struct RootView: View {
         }.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 7)
             .fixedSize(horizontal: false, vertical: true)
             .background { AppBackground() }
-            .accessibilityIdentifier("bottom-navigation")
     }
     private func tabButton(_ value: Int, title: String, symbol: String) -> some View {
         Button { tab = value } label: {

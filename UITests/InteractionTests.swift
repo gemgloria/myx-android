@@ -7,7 +7,9 @@ final class InteractionTests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = ["--preview-demo"]
         app.launch()
-        XCTAssertTrue(app.buttons["tab-0"].waitForExistence(timeout: 8))
+        let visible = app.buttons["tab-0"].waitForExistence(timeout: 8)
+        if !visible { print(app.debugDescription) }
+        XCTAssertTrue(visible)
     }
 
     func testBottomButtonsRespondAtEdgesAndCenters() {
