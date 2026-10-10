@@ -154,9 +154,9 @@ struct WidgetSettingsPreview: View {
         let entry = CourseEntry(date: now, state: .init(selectedSemesterID: semester.id, semesters: [semester]))
         VStack(alignment: .leading, spacing: 15) {
             Text("小组件预览").font(KaiFont.subheadline)
-            CourseWidgetContent(entry: entry).environment(\.widgetFamily, .systemSmall)
+            CourseWidgetContent(entry: entry, family: .systemSmall)
                 .frame(width: 170, height: 180).liquidGlass(tint: .indigo, radius: 26)
-            CourseWidgetContent(entry: entry).environment(\.widgetFamily, .systemMedium)
+            CourseWidgetContent(entry: entry, family: .systemMedium)
                 .frame(maxWidth: .infinity).frame(height: 170).liquidGlass(tint: .indigo, radius: 26)
         }.onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { now = $0 }
     }

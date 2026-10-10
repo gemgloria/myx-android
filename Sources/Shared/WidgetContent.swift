@@ -33,9 +33,12 @@ struct CourseEntry: TimelineEntry {
 // This exact content is used by the extension, settings preview and native
 // snapshot tests. All text stays outside of the removable widget background.
 struct CourseWidgetContent: View {
-    @Environment(\.widgetRenderingMode) private var renderingMode
-    @Environment(\.widgetFamily) private var family
     let entry: CourseEntry
+    let family: WidgetFamily
+    let renderingMode: WidgetRenderingMode
+    init(entry: CourseEntry, family: WidgetFamily = .systemSmall, renderingMode: WidgetRenderingMode = .fullColor) {
+        self.entry = entry; self.family = family; self.renderingMode = renderingMode
+    }
     private var targetURL: URL {
         if let next = entry.next { return courseURL(next) }
         return URL(string: "clearclass://today")!
@@ -65,7 +68,8 @@ struct CourseWidgetContent: View {
             }
             if let next = entry.next {
                 Text(next.start <= entry.date ? "正在上课" : nextDayLabel(next)).font(KaiFont.caption2).foregroundStyle(.secondary)
-                Text(next.course.name).font(KaiFont.headline).lineLimit(3).widgetAccentable().privacySensitive()
+                Text(next.course.name).font(KaiFont.headline).lineLimit(3)
+                    .widgetAccentable(renderingMode == .accented).privacySensitive()
                 Spacer(minLength: 0)
                 HStack(spacing: 5) {
                     Image(systemName: "clock").font(KaiFont.caption2)
@@ -157,9 +161,10 @@ struct CourseWidgetContent: View {
 
 struct CourseWidgetView: View {
     @Environment(\.widgetRenderingMode) private var renderingMode
+    @Environment(\.widgetFamily) private var family
     let entry: CourseEntry
     var body: some View {
-        CourseWidgetContent(entry: entry)
+        CourseWidgetContent(entry: entry, family: family, renderingMode: renderingMode)
             .containerBackground(for: .widget) { WidgetBackground() }
     }
 }

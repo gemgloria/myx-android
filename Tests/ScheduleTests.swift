@@ -44,8 +44,7 @@ final class ScheduleTests: XCTestCase {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         for (name, entry) in entries {
             for (modeName, mode) in [("color", WidgetRenderingMode.fullColor), ("clear", .accented)] {
-                let renderer = ImageRenderer(content: CourseWidgetContent(entry: entry)
-                    .environment(\.widgetFamily, .systemSmall).environment(\.widgetRenderingMode, mode)
+                let renderer = ImageRenderer(content: CourseWidgetContent(entry: entry, family: .systemSmall, renderingMode: mode)
                     .environment(\.colorScheme, .light).frame(width: 170, height: 180).background(.white))
                 renderer.scale = 2
                 let image = try XCTUnwrap(renderer.uiImage)

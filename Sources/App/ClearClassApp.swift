@@ -1,13 +1,19 @@
 import SwiftUI
+import WidgetKit
 
 @main
 struct ClearClassApp: App {
     @StateObject private var store = ScheduleStore()
+    @Environment(\.scenePhase) private var scenePhase
     init() { KaiFont.configureNavigationAppearance() }
     var body: some Scene {
         WindowGroup {
             RootView().environmentObject(store).preferredColorScheme(store.appearance)
                 .font(KaiFont.body).buttonStyle(GlassButtonStyle())
+                .task { WidgetCenter.shared.reloadAllTimelines() }
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active { WidgetCenter.shared.reloadAllTimelines() }
+                }
         }
     }
 }

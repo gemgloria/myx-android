@@ -60,4 +60,18 @@ final class InteractionTests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
     }
+
+    func testDeleteRemovesOnlyTheSelectedArrangement() {
+        app.buttons["course-2-3"].tap()
+        let delete = app.buttons["delete-course-新能源专业英语"]
+        XCTAssertTrue(delete.waitForExistence(timeout: 3))
+        delete.tap()
+        let confirm = app.buttons["删除此课程安排"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 2))
+        confirm.tap()
+        XCTAssertFalse(app.staticTexts["新能源专业英语"].exists)
+        XCTAssertTrue(app.staticTexts["太阳能利用概论"].exists)
+        app.buttons["close-course"].tap()
+        XCTAssertTrue(app.buttons["course-2-3"].waitForExistence(timeout: 2))
+    }
 }

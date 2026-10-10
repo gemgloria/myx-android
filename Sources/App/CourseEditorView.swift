@@ -137,8 +137,8 @@ struct CourseDetailView: View {
                 CourseEditorView(semester: store.semester, course: value) { try store.saveCourse($0) }
                     .font(KaiFont.body).buttonStyle(GlassButtonStyle()).presentationBackground(.ultraThinMaterial)
             }
-            .confirmationDialog("删除这门课程？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
-                Button("删除课程", role: .destructive) {
+            .confirmationDialog("删除「\(deleting?.name ?? "")」？", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+                Button("删除此课程安排", role: .destructive) {
                     if let value = deleting { store.deleteCourse(value.id) }
                     deleting = nil
                     if alternatives.isEmpty { close() }
@@ -161,6 +161,8 @@ struct CourseDetailView: View {
                     Text("编辑").font(KaiFont.subheadline).padding(.horizontal, 12).padding(.vertical, 9)
                         .liquidGlass(tint: active ? value.color.tint : .gray, radius: 14, interactive: true)
                 }.buttonStyle(.plain).accessibilityLabel("编辑" + value.name)
+                GlassIconButton(symbol: "trash", label: "删除" + value.name, tint: .red) { deleting = value }
+                    .accessibilityIdentifier("delete-course-" + value.name)
             }
             Text("第 \(value.weekText) 周").font(KaiFont.body)
             Text(AcademicCalendar.weekdayNames[value.weekday - 1] + " | " + value.periodText + " | " + timeText(value))
