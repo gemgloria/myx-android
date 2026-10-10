@@ -6,7 +6,8 @@ enum KaiFont {
     static let name: String = {
         let postScriptName = "LXGWWenKai-Regular"
         if UIFont(name: postScriptName, size: 17) == nil,
-           let url = Bundle.main.url(forResource: "LXGWWenKai-Regular", withExtension: "ttf") {
+           let url = Bundle.main.url(forResource: "LXGWWenKai-Regular", withExtension: "ttf")
+            ?? Bundle.main.url(forResource: "LXGWWenKai-Widget", withExtension: "ttf") {
             CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         }
         return postScriptName

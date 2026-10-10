@@ -40,7 +40,7 @@ struct WeeklyScheduleView: View {
                                 weekdayHeader(cellWidth: cellWidth)
                                 ScrollView(.vertical, showsIndicators: false) {
                                     timetable(cellWidth: cellWidth).padding(.bottom, 20)
-                                }
+                                }.contentShape(Rectangle()).clipped()
                             }.frame(width: 42 + CGFloat(dayCount) * cellWidth + CGFloat(dayCount - 1) * 4)
                         }
                     }
@@ -181,7 +181,9 @@ struct WeeklyScheduleView: View {
                 .padding(.horizontal, width < 30 ? 3 : 7).padding(.vertical, 9)
                 .frame(width: width, height: height, alignment: .topLeading)
                 .liquidGlass(tint: course.color.tint, radius: 14, interactive: true)
+                .contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityLabel("\(course.name)，\(course.location)，\(course.periodText)，本周有课。同一时段共有\(placement.alternativesCount)项安排，点开查看。")
+            .accessibilityIdentifier("course-\(course.weekday)-\(course.startPeriod)")
     }
     private var accessibleList: some View {
         ScrollView {

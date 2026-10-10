@@ -10,7 +10,7 @@
   <key>CFBundlePackageType</key><string>XPC!</string>
   <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
   <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
-  <key>UIAppFonts</key><array><string>LXGWWenKai-Regular.ttf</string></array>
+  <key>UIAppFonts</key><array><string>LXGWWenKai-Widget.ttf</string></array>
   <key>ClearClassAppGroup</key><string>$(APP_GROUP_ID)</string>
   <key>NSExtension</key><dict><key>NSExtensionPointIdentifier</key><string>com.apple.widgetkit-extension</string></dict>
 </dict></plist>

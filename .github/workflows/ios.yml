@@ -16,7 +16,11 @@ jobs:
         with:
           xcode-version: '26.3'
       - name: Prepare pinned font and spreadsheet engine
-        run: python3 Scripts/prepare-dependencies.py
+        run: |
+          python3 Scripts/prepare-dependencies.py
+          python3 -m venv build/font-tools
+          build/font-tools/bin/pip install fonttools==4.61.1
+          build/font-tools/bin/python Scripts/prepare-widget-font.py
       - name: Spreadsheet regression tests
         run: node Scripts/test-spreadsheet.cjs
       - name: Build and verify iPhone IPA including Widget
@@ -24,7 +28,7 @@ jobs:
           set -o pipefail
           mkdir -p build
           bash Scripts/build-unsigned.sh 2>&1 | tee build/device-build.log
-      - name: Native XCTest on iOS simulator
+      - name: Native XCTest and touch interaction tests on iOS simulator
         if: ${{ !contains(github.event.head_commit.message, '[layout-only]') }}
         run: |
           set -o pipefail
@@ -40,6 +44,8 @@ jobs:
           xcrun simctl bootstatus "$DEVICE_ID" -b
           xcrun simctl install "$DEVICE_ID" build/simulator/Build/Products/Debug-iphonesimulator/ClearClass.app
           xcrun simctl status_bar "$DEVICE_ID" override --time '9:41' --batteryState charged --batteryLevel 100
+          APP_CONTAINER=$(xcrun simctl get_app_container "$DEVICE_ID" com.mayexin.ClearClass data)
+          if [ -d "$APP_CONTAINER/Library/Caches/WidgetSnapshots" ]; then cp -R "$APP_CONTAINER/Library/Caches/WidgetSnapshots" build/; fi
           for VIEW in week today settings detail; do
             xcrun simctl launch --terminate-running-process "$DEVICE_ID" com.mayexin.ClearClass --preview-demo "--preview-$VIEW"
             sleep 3
@@ -63,4 +69,5 @@ jobs:
           path: |
             build/*.log
             build/NativeScreens/*.png
+            build/WidgetSnapshots/*.png
           if-no-files-found: ignore

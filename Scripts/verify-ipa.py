@@ -32,9 +32,12 @@ with zipfile.ZipFile(archive) as package:
             if command == 0x32: platforms.append(struct.unpack_from('<I', executable, cursor + 8)[0])
             cursor += size
         assert 2 in platforms, 'Expected iOS device platform'
-        font = package.read(directory + 'LXGWWenKai-Regular.ttf')
-        assert hashlib.sha256(font).hexdigest() == '39ad71264b588165b469e35e6afb162a378dacd1f95348160240ba9038ac3009'
-        assert 'LXGWWenKai-Regular.ttf' in info['UIAppFonts']
+        font_name = 'LXGWWenKai-Regular.ttf' if directory == app else 'LXGWWenKai-Widget.ttf'
+        font = package.read(directory + font_name)
+        expected = Path(__file__).resolve().parents[1] / 'Resources' / font_name
+        assert hashlib.sha256(font).digest() == hashlib.sha256(expected.read_bytes()).digest()
+        assert font_name in info['UIAppFonts']
+        if directory == widget: assert len(font) < 14 * 1024 * 1024
         binaries.append({'bundle': info['CFBundleIdentifier'], 'executable_bytes': len(executable), 'cpu': 'arm64', 'platform': 'iOS'})
     assert app + 'xlsx.full.min.js' in names and app + 'SpreadsheetImport.js' in names
     report = {'name': app_info['CFBundleDisplayName'], 'version': app_info['CFBundleShortVersionString'],

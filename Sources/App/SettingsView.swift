@@ -150,33 +150,14 @@ struct SettingsView: View {
 struct WidgetSettingsPreview: View {
     let semester: Semester
     @State private var now = AppPreview.date
-    private var next: Lesson? { ScheduleEngine.nextLesson(after: now, semester: semester) }
-    private var today: [Lesson] { ScheduleEngine.lessons(on: now, semester: semester) }
     var body: some View {
+        let entry = CourseEntry(date: now, state: .init(selectedSemesterID: semester.id, semesters: [semester]))
         VStack(alignment: .leading, spacing: 15) {
             Text("小组件预览").font(KaiFont.subheadline)
-            VStack(alignment: .leading, spacing: 10) {
-                Text("烨昕的课表").font(KaiFont.caption).foregroundStyle(.secondary)
-                Text(next?.course.name ?? "暂时没有课程").font(KaiFont.headline).lineLimit(3)
-                Spacer(minLength: 0)
-                if let lesson = next {
-                    Text(lesson.start, style: .time).font(KaiFont.title2)
-                    Text(lesson.course.location).font(KaiFont.caption).foregroundStyle(.secondary).lineLimit(1)
-                } else { Image(systemName: "leaf").foregroundStyle(.indigo) }
-            }.padding(17).frame(width: 158, height: 170, alignment: .topLeading)
-                .liquidGlass(tint: next?.course.color.tint ?? .indigo, radius: 26)
-            VStack(alignment: .leading, spacing: 10) {
-                Text("今日课表").font(KaiFont.headline)
-                if today.isEmpty { Text("今天没有课").font(KaiFont.caption).foregroundStyle(.secondary) }
-                ForEach(Array(today.prefix(3))) { lesson in
-                    HStack(spacing: 9) {
-                        Text(lesson.start, style: .time).font(KaiFont.caption)
-                        Text(lesson.course.name).font(KaiFont.subheadline).lineLimit(1)
-                        Spacer(minLength: 0)
-                    }.foregroundStyle(lesson.course.color.tint)
-                }
-            }.padding(17).frame(maxWidth: .infinity, minHeight: 130, alignment: .topLeading)
-                .liquidGlass(tint: .indigo, radius: 26)
+            CourseWidgetContent(entry: entry).environment(\.widgetFamily, .systemSmall)
+                .frame(width: 170, height: 180).liquidGlass(tint: .indigo, radius: 26)
+            CourseWidgetContent(entry: entry).environment(\.widgetFamily, .systemMedium)
+                .frame(maxWidth: .infinity).frame(height: 170).liquidGlass(tint: .indigo, radius: 26)
         }.onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { now = $0 }
     }
 }

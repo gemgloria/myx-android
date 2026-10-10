@@ -1,8 +1,77 @@
 import XCTest
 import UIKit
+import SwiftUI
+import WidgetKit
 @testable import ClearClass
 
 final class ScheduleTests: XCTestCase {
+    func testNextLessonAgreesWithDayScanAcrossSemester() {
+        let semester = ExampleSchedule.semester()
+        for dayOffset in stride(from: -3, through: 143, by: 3) {
+            for minute in [0, 575, 690, 1200] {
+                let day = AcademicCalendar.addDays(dayOffset, to: AcademicCalendar.date(from: semester.firstMonday)!)
+                let date = AcademicCalendar.atMinute(minute, on: day)
+                var expected: Lesson?
+                var scan = max(day, AcademicCalendar.date(from: semester.firstMonday)!)
+                let end = AcademicCalendar.date(week: semester.weekCount + 1, semester: semester)
+                while scan < end {
+                    if let lesson = ScheduleEngine.lessons(on: scan, semester: semester).first(where: { $0.end > date }) {
+                        expected = lesson; break
+                    }
+                    scan = AcademicCalendar.addDays(1, to: scan)
+                }
+                let next = ScheduleEngine.nextLesson(after: date, semester: semester)
+                XCTAssertEqual(next?.id, expected?.id)
+                XCTAssertEqual(next?.start, expected?.start)
+            }
+        }
+    }
+
+    func testWidgetEntryKeepsEmptyAndPermissionStatesReadable() {
+        XCTAssertEqual(CourseEntry(date: .now, state: nil).emptyMessage, "打开 App，导入课表")
+        XCTAssertEqual(CourseEntry(date: .now, state: nil, status: .sharingUnavailable).emptyMessage, "打开 App，检查小组件权限")
+        XCTAssertEqual(CourseEntry(date: .now, state: nil, status: .unreadable).emptyMessage, "打开 App，更新课表")
+    }
+
+    @MainActor
+    func testWidgetSnapshotContainsTextForDataAndFallbackStates() throws {
+        let semester = ExampleSchedule.semester()
+        let date = AcademicCalendar.atMinute(540, on: AcademicCalendar.date(from: "2026-10-10")!)
+        let ready = CourseEntry(date: date, state: .init(selectedSemesterID: semester.id, semesters: [semester]))
+        let entries: [(String, CourseEntry)] = [("course", ready), ("empty", .init(date: date, state: nil)),
+            ("permissions", .init(date: date, state: nil, status: .sharingUnavailable))]
+        let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("WidgetSnapshots")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        for (name, entry) in entries {
+            for (modeName, mode) in [("color", WidgetRenderingMode.fullColor), ("clear", .accented)] {
+                let renderer = ImageRenderer(content: CourseWidgetContent(entry: entry)
+                    .environment(\.widgetFamily, .systemSmall).environment(\.widgetRenderingMode, mode)
+                    .environment(\.colorScheme, .light).frame(width: 170, height: 180).background(.white))
+                renderer.scale = 2
+                let image = try XCTUnwrap(renderer.uiImage)
+                try XCTUnwrap(image.pngData()).write(to: directory.appendingPathComponent("\(name)-\(modeName).png"))
+                // Check the header band: it contains the app title, not the leaf
+                // icon. This catches a blank snapshot even when data is missing.
+                let cgImage = try XCTUnwrap(image.cgImage)
+                var pixels = [UInt8](repeating: 255, count: cgImage.width * cgImage.height * 4)
+                let darkPixels = pixels.withUnsafeMutableBytes { buffer -> Int in
+                    let context = CGContext(data: buffer.baseAddress, width: cgImage.width, height: cgImage.height,
+                        bitsPerComponent: 8, bytesPerRow: cgImage.width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                    context.translateBy(x: 0, y: CGFloat(cgImage.height)); context.scaleBy(x: 1, y: -1)
+                    context.draw(cgImage, in: CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
+                    let data = buffer.bindMemory(to: UInt8.self)
+                    return (24..<84).reduce(0) { count, y in
+                        count + (24..<(cgImage.width - 24)).filter { x in
+                            let offset = (y * cgImage.width + x) * 4
+                            return Int(data[offset]) + Int(data[offset + 1]) + Int(data[offset + 2]) < 630
+                        }.count
+                    }
+                }
+                XCTAssertGreaterThan(darkPixels, 100, "\(name)-\(modeName) must render its title.")
+            }
+        }
+    }
     @MainActor
     func testKaiFontIsBundledAndRegistered() {
         XCTAssertNotNil(Bundle.main.url(forResource: "LXGWWenKai-Regular", withExtension: "ttf"))

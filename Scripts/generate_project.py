@@ -20,15 +20,16 @@ def build_file(ref, extra=''):
 all_paths = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT/'Sources').rglob('*.swift'))
 refs = {p: file(p, 'sourcecode.swift') for p in all_paths}
 test_ref = file('Tests/ScheduleTests.swift', 'sourcecode.swift')
-resource_paths = ['Resources/xlsx.full.min.js', 'Resources/SpreadsheetImport.js', 'Resources/SHEETJS-LICENSE.txt', 'Resources/Assets.xcassets', 'Resources/LXGWWenKai-Regular.ttf', 'Resources/WENKAI-OFL.txt']
+ui_test_ref = file('UITests/InteractionTests.swift', 'sourcecode.swift')
+resource_paths = ['Resources/xlsx.full.min.js', 'Resources/SpreadsheetImport.js', 'Resources/SHEETJS-LICENSE.txt', 'Resources/Assets.xcassets', 'Resources/LXGWWenKai-Regular.ttf', 'Resources/LXGWWenKai-Widget.ttf', 'Resources/WENKAI-OFL.txt']
 resource_refs = [file(p, 'folder.assetcatalog' if p.endswith('xcassets') else 'text') for p in resource_paths]
 configuration_paths = ['Configuration/Settings.xcconfig', 'Configuration/App-Info.plist', 'Configuration/Widget-Info.plist', 'Configuration/App.entitlements', 'Configuration/Widget.entitlements']
 configuration_refs = [file(p, 'text.xcconfig' if p.endswith('xcconfig') else 'text.plist.xml') for p in configuration_paths]
 products = {}
-for name, path, kind in [('ClearClass','ClearClass.app','wrapper.application'), ('ClearClassWidgets','ClearClassWidgets.appex','wrapper.app-extension'), ('ClearClassTests','ClearClassTests.xctest','wrapper.cfbundle')]:
+for name, path, kind in [('ClearClass','ClearClass.app','wrapper.application'), ('ClearClassWidgets','ClearClassWidgets.appex','wrapper.app-extension'), ('ClearClassTests','ClearClassTests.xctest','wrapper.cfbundle'), ('ClearClassUITests','ClearClassUITests.xctest','wrapper.cfbundle')]:
     products[name] = put('product:' + name, '{isa = PBXFileReference; explicitFileType = ' + kind + '; includeInIndex = 0; path = ' + quoted(path) + '; sourceTree = BUILT_PRODUCTS_DIR;}')
 product_group = put('products', '{isa = PBXGroup; children = ' + listing(list(products.values())) + '; name = Products; sourceTree = "<group>";}')
-main_group = put('mainGroup', '{isa = PBXGroup; children = ' + listing(list(refs.values()) + [test_ref] + resource_refs + configuration_refs + [product_group]) + '; sourceTree = "<group>";}')
+main_group = put('mainGroup', '{isa = PBXGroup; children = ' + listing(list(refs.values()) + [test_ref, ui_test_ref] + resource_refs + configuration_refs + [product_group]) + '; sourceTree = "<group>";}')
 
 project_settings = {'SDKROOT':'iphoneos','IPHONEOS_DEPLOYMENT_TARGET':'17.0','SWIFT_VERSION':'5.0','CLANG_ENABLE_MODULES':'YES',
                     'SWIFT_STRICT_CONCURRENCY':'targeted','ENABLE_USER_SCRIPT_SANDBOXING':'YES','GCC_C_LANGUAGE_STANDARD':'gnu17',
@@ -50,10 +51,11 @@ project_configs=config_list('project',project_settings)
 app_sources=[build_file(refs[p]) for p in all_paths if '/Widgets/' not in p]
 widget_paths=[p for p in all_paths if '/Shared/' in p or '/Widgets/' in p or p.endswith('/GlassStyle.swift') or p.endswith('/KaiFont.swift')]
 widget_sources=[put('widgetbuild:' + p, '{isa = PBXBuildFile; fileRef = ' + refs[p] + ';}') for p in widget_paths]
-app_phases=[phase('appSources','PBXSourcesBuildPhase',app_sources),phase('appFrameworks','PBXFrameworksBuildPhase',[]),phase('appResources','PBXResourcesBuildPhase',[build_file(ref) for ref in resource_refs])]
-widget_resource_files=[put('widgetresource:'+p, '{isa = PBXBuildFile; fileRef = ' + resource_refs[resource_paths.index(p)] + ';}') for p in ['Resources/LXGWWenKai-Regular.ttf', 'Resources/WENKAI-OFL.txt']]
+app_phases=[phase('appSources','PBXSourcesBuildPhase',app_sources),phase('appFrameworks','PBXFrameworksBuildPhase',[]),phase('appResources','PBXResourcesBuildPhase',[build_file(ref) for p, ref in zip(resource_paths, resource_refs) if p != 'Resources/LXGWWenKai-Widget.ttf'])]
+widget_resource_files=[put('widgetresource:'+p, '{isa = PBXBuildFile; fileRef = ' + resource_refs[resource_paths.index(p)] + ';}') for p in ['Resources/LXGWWenKai-Widget.ttf', 'Resources/WENKAI-OFL.txt']]
 widget_phases=[phase('widgetSources','PBXSourcesBuildPhase',widget_sources),phase('widgetFrameworks','PBXFrameworksBuildPhase',[]),phase('widgetResources','PBXResourcesBuildPhase',widget_resource_files)]
 test_phases=[phase('testSources','PBXSourcesBuildPhase',[build_file(test_ref)]),phase('testFrameworks','PBXFrameworksBuildPhase',[]),phase('testResources','PBXResourcesBuildPhase',[])]
+ui_test_phases=[phase('uiTestSources','PBXSourcesBuildPhase',[build_file(ui_test_ref)]),phase('uiTestFrameworks','PBXFrameworksBuildPhase',[]),phase('uiTestResources','PBXResourcesBuildPhase',[])]
 embed_file=build_file(products['ClearClassWidgets'],'settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy,);};')
 app_phases.append(put('embed', '{isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = ' + listing([embed_file]) + '; name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0;}'))
 project_id=identifier('projectObject'); app_id=identifier('target:ClearClass'); widget_id=identifier('target:ClearClassWidgets')
@@ -73,10 +75,13 @@ widget_settings={'PRODUCT_NAME':'$(TARGET_NAME)','PRODUCT_BUNDLE_IDENTIFIER':'$(
 test_settings={'PRODUCT_NAME':'$(TARGET_NAME)','PRODUCT_BUNDLE_IDENTIFIER':'$(APP_BUNDLE_ID).tests','GENERATE_INFOPLIST_FILE':'YES','TARGETED_DEVICE_FAMILY':'1,2',
                'TEST_HOST':'$(BUILT_PRODUCTS_DIR)/ClearClass.app/ClearClass','BUNDLE_LOADER':'$(TEST_HOST)','TEST_TARGET_NAME':'ClearClass',
                'SUPPORTED_PLATFORMS':'iphoneos iphonesimulator'}
+ui_test_settings={'PRODUCT_NAME':'$(TARGET_NAME)','PRODUCT_BUNDLE_IDENTIFIER':'$(APP_BUNDLE_ID).uitests','GENERATE_INFOPLIST_FILE':'YES','TARGETED_DEVICE_FAMILY':'1,2',
+                  'TEST_TARGET_NAME':'ClearClass','SUPPORTED_PLATFORMS':'iphoneos iphonesimulator'}
 targets=[]
 for name,kind,phases,values,deps in [('ClearClass','application',app_phases,app_settings,[widget_dependency]),
                                     ('ClearClassWidgets','app-extension',widget_phases,widget_settings,[]),
-                                    ('ClearClassTests','bundle.unit-test',test_phases,test_settings,[app_dependency])]:
+                                    ('ClearClassTests','bundle.unit-test',test_phases,test_settings,[app_dependency]),
+                                    ('ClearClassUITests','bundle.ui-testing',ui_test_phases,ui_test_settings,[app_dependency])]:
     target=put('target:'+name, '{isa = PBXNativeTarget; buildConfigurationList = ' + config_list(name,values) + '; buildPhases = ' + listing(phases) +
                '; buildRules = (); dependencies = ' + listing(deps) + '; name = ' + name + '; productName = ' + name + '; productReference = ' + products[name] +
                '; productType = "com.apple.product-type.' + kind + '";}')
@@ -95,11 +100,11 @@ scheme='''<?xml version="1.0" encoding="UTF-8"?>
 <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES"><BuildActionEntries>
 <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="APPID" BuildableName="ClearClass.app" BlueprintName="ClearClass" ReferencedContainer="container:ClearClass.xcodeproj"/></BuildActionEntry>
 </BuildActionEntries></BuildAction>
-<TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES"><Testables><TestableReference skipped="NO"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="TESTID" BuildableName="ClearClassTests.xctest" BlueprintName="ClearClassTests" ReferencedContainer="container:ClearClass.xcodeproj"/></TestableReference></Testables></TestAction>
+<TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES"><Testables><TestableReference skipped="NO"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="TESTID" BuildableName="ClearClassTests.xctest" BlueprintName="ClearClassTests" ReferencedContainer="container:ClearClass.xcodeproj"/></TestableReference><TestableReference skipped="NO"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="UITESTID" BuildableName="ClearClassUITests.xctest" BlueprintName="ClearClassUITests" ReferencedContainer="container:ClearClass.xcodeproj"/></TestableReference></Testables></TestAction>
 <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES"><BuildableProductRunnable runnableDebuggingMode="0"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="APPID" BuildableName="ClearClass.app" BlueprintName="ClearClass" ReferencedContainer="container:ClearClass.xcodeproj"/></BuildableProductRunnable></LaunchAction>
 <ProfileAction buildConfiguration="Release" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES"><BuildableProductRunnable runnableDebuggingMode="0"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="APPID" BuildableName="ClearClass.app" BlueprintName="ClearClass" ReferencedContainer="container:ClearClass.xcodeproj"/></BuildableProductRunnable></ProfileAction>
 <AnalyzeAction buildConfiguration="Debug"/><ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"/>
-</Scheme>'''.replace('APPID',app_id).replace('TESTID',identifier('target:ClearClassTests'))
+</Scheme>'''.replace('APPID',app_id).replace('UITESTID',identifier('target:ClearClassUITests')).replace('TESTID',identifier('target:ClearClassTests'))
 scheme_dir=destination/'xcshareddata/xcschemes'; scheme_dir.mkdir(parents=True,exist_ok=True)
 (scheme_dir/'ClearClass.xcscheme').write_text(scheme)
 print('Generated Xcode project:',len(all_paths),'Swift source files, app + widgets + unit tests')

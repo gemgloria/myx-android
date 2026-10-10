@@ -67,15 +67,26 @@ enum ScheduleEngine {
         }.sorted { $0.start == $1.start ? $0.course.name < $1.course.name : $0.start < $1.start }
     }
     static func nextLesson(after date: Date, semester: Semester) -> Lesson? {
-        let start = max(AcademicCalendar.calendar.startOfDay(for: date), AcademicCalendar.date(from: semester.firstMonday)!)
-        let end = AcademicCalendar.date(week: semester.weekCount + 1, semester: semester)
-        guard start < end else { return nil }
-        var day = start
-        while day < end {
-            if let next = lessons(on: day, semester: semester).first(where: { $0.end > date }) { return next }
-            day = AcademicCalendar.addDays(1, to: day)
+        guard !semester.courses.isEmpty,
+              date < AcademicCalendar.date(week: semester.weekCount + 1, semester: semester) else { return nil }
+        let firstWeek = AcademicCalendar.nearestWeek(on: date, semester: semester)
+        var next: Lesson?
+        // Visit actual course occurrences, rather than scanning every empty day
+        // and parsing the semester start once per course per day on the UI thread.
+        for course in semester.courses {
+            guard let first = semester.periods.first(where: { $0.id == course.startPeriod }),
+                  let last = semester.periods.first(where: { $0.id == course.endPeriod }) else { continue }
+            for week in course.weeks.sorted() where week >= firstWeek {
+                let day = AcademicCalendar.date(week: week, weekday: course.weekday, semester: semester)
+                let end = AcademicCalendar.atMinute(last.endMinute, on: day)
+                guard end > date else { continue }
+                let lesson = Lesson(course: course, start: AcademicCalendar.atMinute(first.startMinute, on: day), end: end)
+                if next == nil || lesson.start < next!.start ||
+                    (lesson.start == next!.start && lesson.course.name < next!.course.name) { next = lesson }
+                break
+            }
         }
-        return nil
+        return next
     }
     static func conflicts(for course: Course, in semester: Semester) -> [Course] {
         semester.courses.filter {

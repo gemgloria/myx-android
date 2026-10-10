@@ -20,17 +20,22 @@ struct GlassSurface: ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        if reduceTransparency {
-            content.background(Color(uiColor: .secondarySystemBackground), in: shape)
-                .overlay(shape.strokeBorder(tint.opacity(0.2), lineWidth: 1))
-        } else if #available(iOS 26.0, *) {
-            content.glassEffect(.regular.tint(tint.opacity(0.1)).interactive(interactive), in: shape)
-        } else {
-            content.background(.ultraThinMaterial, in: shape)
-                .background(tint.opacity(0.07), in: shape)
-                .overlay(shape.strokeBorder(.primary.opacity(0.07), lineWidth: 0.75))
-                .shadow(color: .black.opacity(0.035), radius: 10, y: 4)
-        }
+        // The material is decoration. Keep it out of hit testing, and keep labels
+        // in the normal view tree so the whole padded button remains tappable.
+        content.background {
+            Group {
+                if reduceTransparency {
+                    shape.fill(Color(uiColor: .secondarySystemBackground))
+                        .overlay(shape.strokeBorder(tint.opacity(0.2), lineWidth: 1))
+                } else if #available(iOS 26.0, *) {
+                    shape.fill(.clear).glassEffect(.regular.tint(tint.opacity(0.1)), in: shape)
+                } else {
+                    shape.fill(.ultraThinMaterial)
+                        .overlay(shape.fill(tint.opacity(0.07)))
+                        .overlay(shape.strokeBorder(.primary.opacity(0.07), lineWidth: 0.75))
+                }
+            }.allowsHitTesting(false).accessibilityHidden(true)
+        }.contentShape(.interaction, shape)
     }
 }
 
@@ -39,6 +44,7 @@ struct GlassButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.padding(.horizontal, 12).padding(.vertical, 9)
             .liquidGlass(tint: .indigo, radius: 18, interactive: true)
+            .contentShape(Rectangle())
             .opacity(isEnabled ? (configuration.isPressed ? 0.65 : 1) : 0.4)
     }
 }
@@ -72,7 +78,7 @@ struct AppBackground: View {
                 Circle().fill(Color.pink.opacity(0.06)).frame(width: proxy.size.width)
                     .blur(radius: 100).offset(x: -80, y: 440)
             }
-        }.ignoresSafeArea()
+        }.ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
     }
 }
 

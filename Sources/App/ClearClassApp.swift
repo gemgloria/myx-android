@@ -20,14 +20,20 @@ struct RootView: View {
     @State private var selectedCourse: CourseSelection?
     var body: some View {
         ZStack {
-            NavigationStack {
-                Group {
-                    switch tab {
-                    case 1: TodayView { showCourse($0, week: $1) }
-                    case 2: SettingsView()
-                    default: WeeklyScheduleView(chosenWeek: $viewedWeek) { showCourse($0, week: $1) }
+            VStack(spacing: 0) {
+                NavigationStack {
+                    Group {
+                        switch tab {
+                        case 1: TodayView { showCourse($0, week: $1) }
+                        case 2: SettingsView()
+                        default: WeeklyScheduleView(chosenWeek: $viewedWeek) { showCourse($0, week: $1) }
+                        }
                     }
-                }.safeAreaInset(edge: .bottom, spacing: 0) { tabBar }
+                }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .contentShape(Rectangle()).clipped()
+                // Outside the page and its scroll view: page controls cannot
+                // extend their hit regions into the bottom navigation bar.
+                tabBar.zIndex(2)
             }.allowsHitTesting(selectedCourse == nil).accessibilityHidden(selectedCourse != nil)
             if let selection = selectedCourse {
                 CourseDetailView(course: selection.course, week: selection.week) { selectedCourse = nil }
@@ -61,13 +67,17 @@ struct RootView: View {
     }
     private func showCourse(_ course: Course, week: Int) { selectedCourse = .init(course: course, week: week) }
     private var tabBar: some View {
-        GlassGroup {
+        ZStack {
+            Color.clear.contentShape(Rectangle()).onTapGesture {}
             HStack(spacing: 10) {
                 tabButton(0, title: "课表", symbol: "calendar")
                 tabButton(1, title: "今天", symbol: "sun.max")
                 tabButton(2, title: "设置", symbol: "slider.horizontal.3")
             }.padding(7).liquidGlass(radius: 32)
         }.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 7)
+            .fixedSize(horizontal: false, vertical: true)
+            .background { AppBackground() }
+            .accessibilityIdentifier("bottom-navigation")
     }
     private func tabButton(_ value: Int, title: String, symbol: String) -> some View {
         Button { tab = value } label: {
@@ -77,7 +87,9 @@ struct RootView: View {
             }.frame(maxWidth: .infinity).padding(.vertical, 9)
                 .foregroundStyle(tab == value ? Color.indigo : .secondary)
                 .liquidGlass(tint: tab == value ? .indigo : .clear, radius: 25, interactive: true)
+                .contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityLabel(title)
+            .accessibilityIdentifier("tab-\(value)")
             .accessibilityAddTraits(tab == value ? .isSelected : [])
     }
 }

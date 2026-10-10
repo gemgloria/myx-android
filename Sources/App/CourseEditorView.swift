@@ -114,6 +114,7 @@ struct CourseDetailView: View {
                     Text("第 \(week) 周 · 同一时段").font(KaiFont.subheadline).foregroundStyle(.secondary)
                     Spacer()
                     GlassIconButton(symbol: "xmark", label: "关闭课程详情", action: close)
+                        .accessibilityIdentifier("close-course")
                 }.padding(.horizontal, 22).padding(.top, 16)
                 Spacer(minLength: 0)
                 ScrollView {
@@ -131,7 +132,7 @@ struct CourseDetailView: View {
                     .frame(maxHeight: min(CGFloat(alternatives.count) * 270 + 60, 650))
                 Spacer(minLength: 0)
             }.frame(maxWidth: 520)
-        }.font(KaiFont.body)
+        }.font(KaiFont.body).accessibilityIdentifier("course-detail")
             .sheet(item: $editing) { value in
                 CourseEditorView(semester: store.semester, course: value) { try store.saveCourse($0) }
                     .font(KaiFont.body).buttonStyle(GlassButtonStyle()).presentationBackground(.ultraThinMaterial)
