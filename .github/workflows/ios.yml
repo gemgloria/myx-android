@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
         timeout-minutes: 12
         run: |
           set -o pipefail
-          RUNTIME_ID=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["identifier"] for x in d["runtimes"] if x.get("isAvailable") and "iOS-26" in x["identifier"]))')
+          RUNTIME_ID=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["identifier"] for x in d["runtimes"] if x.get("isAvailable") and x["identifier"]=="com.apple.CoreSimulator.SimRuntime.iOS-26-2"))')
           DEVICE_ID=$(xcrun simctl create "Yexin-$GITHUB_RUN_ID" com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro "$RUNTIME_ID")
           echo "DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
           xcrun simctl boot "$DEVICE_ID"
