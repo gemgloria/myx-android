@@ -72,10 +72,20 @@ final class InteractionTests: XCTestCase {
         let deleteCurrent = app.buttons["delete-course-太阳能利用概论"]
         XCTAssertTrue(deleteCurrent.waitForExistence(timeout: 3))
         deleteCurrent.tap()
-        let cancel = app.buttons["取消"]
-        XCTAssertTrue(cancel.waitForExistence(timeout: 2))
-        cancel.tap()
+        let destructive = app.buttons["删除此课程安排"]
+        XCTAssertTrue(destructive.waitForExistence(timeout: 3))
+        let cancel = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "取消", "Cancel")).firstMatch
+        if cancel.exists {
+            cancel.tap()
+        } else {
+            // On iOS 26 this dialog can be a popover without a cancel button.
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.12)).tap()
+        }
+        XCTAssertTrue(destructive.waitForNonExistence(timeout: 3))
+        if !app.buttons["close-course"].exists { app.buttons["course-2-3"].tap() }
+        XCTAssertTrue(app.buttons["close-course"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["太阳能利用概论"].exists)
+        XCTAssertTrue(app.staticTexts["新能源专业英语"].exists)
         let delete = app.buttons["delete-course-新能源专业英语"]
         XCTAssertTrue(delete.waitForExistence(timeout: 3))
         delete.tap()

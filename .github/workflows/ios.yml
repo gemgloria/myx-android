@@ -40,6 +40,8 @@ jobs:
       - name: Native XCTest and touch interaction tests on iOS simulator
         if: ${{ !contains(github.event.head_commit.message, '[layout-only]') }}
         timeout-minutes: 12
+        env:
+          NATIVE_TEST_SCOPE: ${{ contains(github.event.head_commit.message, '[delete-only]') && 'delete' || 'all' }}
         run: |
           set -o pipefail
           RUNTIME_ID=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["identifier"] for x in d["runtimes"] if x.get("isAvailable") and x["identifier"]=="com.apple.CoreSimulator.SimRuntime.iOS-26-2"))')
@@ -47,7 +49,9 @@ jobs:
           echo "DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
           xcrun simctl boot "$DEVICE_ID"
           python3 -c 'import subprocess,sys; subprocess.run(["xcrun","simctl","bootstatus",sys.argv[1],"-b"],check=True,timeout=180)' "$DEVICE_ID"
-          xcodebuild -project ClearClass.xcodeproj -scheme ClearClass -configuration Debug -destination "platform=iOS Simulator,id=$DEVICE_ID" -derivedDataPath build/simulator -resultBundlePath build/TestResults.xcresult -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test 2>&1 | tee build/simulator-test.log
+          native_test_args=()
+          if [ "$NATIVE_TEST_SCOPE" = "delete" ]; then native_test_args+=("-only-testing:ClearClassUITests/InteractionTests/testDeleteRemovesOnlyTheSelectedArrangement"); fi
+          xcodebuild -project ClearClass.xcodeproj -scheme ClearClass -configuration Debug -destination "platform=iOS Simulator,id=$DEVICE_ID" -derivedDataPath build/simulator -resultBundlePath build/TestResults.xcresult -parallel-testing-enabled NO "${native_test_args[@]}" CODE_SIGNING_ALLOWED=NO test 2>&1 | tee build/simulator-test.log
       - name: Export native screen and widget snapshots
         if: ${{ always() && env.DEVICE_ID != '' && !contains(github.event.head_commit.message, '[layout-only]') }}
         timeout-minutes: 3
