@@ -92,12 +92,17 @@ final class InteractionTests: XCTestCase {
                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
             context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
             let data = buffer.bindMemory(to: UInt8.self)
-            return (minY..<maxY).reduce(0) { result, y in
-                result + (minX..<maxX).filter { x in
+            var darkPixelCount = 0
+            for y in minY..<maxY {
+                for x in minX..<maxX {
                     let offset = (y * image.width + x) * 4
-                    return Int(data[offset]) + Int(data[offset + 1]) + Int(data[offset + 2]) < 530
-                }.count
+                    let red = Int(data[offset])
+                    let green = Int(data[offset + 1])
+                    let blue = Int(data[offset + 2])
+                    if red + green + blue < 530 { darkPixelCount += 1 }
+                }
             }
+            return darkPixelCount
         }
         XCTAssertGreaterThan(count, 100, "Course text must be visible in the rendered screen, not only in accessibility.", file: file, line: line)
     }
